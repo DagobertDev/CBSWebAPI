@@ -8,11 +8,11 @@ namespace CBSWebAPI.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class BikeController : ControllerBase
+    public class BikesController : ControllerBase
     {
-	    private readonly ILogger<BikeController> _logger;
+	    private readonly ILogger<BikesController> _logger;
 
-        public BikeController(ILogger<BikeController> logger)
+        public BikesController(ILogger<BikesController> logger)
         {
             _logger = logger;
         }
