@@ -27,6 +27,7 @@ namespace CBSWebAPI
         public void ConfigureServices(IServiceCollection services)
         {
 
+	        services.AddCors();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -44,6 +45,8 @@ namespace CBSWebAPI
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CBSWebAPI v1"));
             }
 
+            // TODO: Restrict origins
+			app.UseCors(options => options.AllowAnyOrigin());
             app.UseHttpsRedirection();
 
             app.UseRouting();
