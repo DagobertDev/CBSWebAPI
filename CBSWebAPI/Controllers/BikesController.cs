@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CBSWebAPI.Controllers
 {
@@ -10,23 +8,14 @@ namespace CBSWebAPI.Controllers
     [Route("[controller]")]
     public class BikesController : ControllerBase
     {
-	    private readonly ILogger<BikesController> _logger;
+	    private readonly AppDbContext _context;
 
-        public BikesController(ILogger<BikesController> logger)
-        {
-            _logger = logger;
-        }
+	    public BikesController(AppDbContext context)
+	    {
+		    _context = context;
+	    }
 
         [HttpGet]
-        public IEnumerable<Bike> Get()
-        {
-            var rng = new Random();
-            return Enumerable.Range(1, rng.Next(1, 6)).Select(index => new Bike
-            {
-	            Id = index,
-	            Name = $"Fahrrad Nr. {index}"
-            })
-            .ToArray();
-        }
+        public IEnumerable<Bike> Get() => _context.Bikes.ToList();
     }
 }
