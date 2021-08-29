@@ -36,7 +36,7 @@ namespace CBSWebAPI
         {
             if (env.IsDevelopment())
             {
-	            app.UseCors(options => options.AllowAnyOrigin());
+	            app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CBSWebAPI v1"));
