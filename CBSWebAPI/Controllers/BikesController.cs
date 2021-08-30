@@ -2,12 +2,14 @@
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebAPI.Controllers
 {
 	[ApiController]
+	[Authorize]
 	[Route("[controller]")]
 	public class BikesController : ControllerBase
 	{
