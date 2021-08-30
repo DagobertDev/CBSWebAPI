@@ -1,4 +1,4 @@
-namespace CBSWebAPI
+namespace CBSWebAPI.Models
 {
     public class Bike
     {
