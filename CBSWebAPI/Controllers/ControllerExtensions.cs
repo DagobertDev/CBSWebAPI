@@ -9,7 +9,7 @@ namespace CBSWebAPI.Controllers
 		public static bool IsUser(this ControllerBase controller, string id) =>
 			controller.User.Claims.Single(claim => claim.Type == "user_id").Value == id;
 
-		public static string GetUserEmail(this ControllerBase controller)
+		public static string? GetUserEmail(this ControllerBase controller)
 		{
 			var firebase = controller.User.Claims.SingleOrDefault(claim => claim.Type == "firebase");
 
@@ -20,11 +20,11 @@ namespace CBSWebAPI.Controllers
 
 		private class FirebaseClaim
 		{
-			public Identities identities { get; set; }
+			public Identities? identities { get; set; }
 
 			public class Identities
 			{
-				public string[] email { get; set; }
+				public string[]? email { get; set; }
 			}
 		}
 	}

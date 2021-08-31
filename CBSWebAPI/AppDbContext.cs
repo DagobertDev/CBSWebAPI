@@ -7,7 +7,7 @@ namespace CBSWebAPI
 	{
 		public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-		public DbSet<Bike> Bikes { get; set; }
-		public DbSet<ApplicationUser> Users { get; set; }
+		public DbSet<Bike> Bikes => Set<Bike>();
+		public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
 	}
 }
