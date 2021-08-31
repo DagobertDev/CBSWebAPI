@@ -24,4 +24,8 @@ namespace CBSWebAPI.Models
 			private set => _members = value;
 		}
 	}
+
+	public record CommunityWrite([property: Required, MaxLength(32)] string Name);
+
+	public record CommunityRead(long Id, string Name);
 }

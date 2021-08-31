@@ -21,43 +21,50 @@ namespace CBSWebAPI.Controllers
 		}
 
 		[HttpGet("{id:long}")]
-		public async Task<ActionResult<Community>> Get(long id)
+		public async Task<ActionResult<CommunityRead>> Get(long id)
 		{
-			var community = await _context.Communities.Include(community => community.Members)
-				.SingleOrDefaultAsync(community => community.Id == id);
+			var userId = this.GetUserId();
 
-			if (community == null)
+			var result = await _context.Communities.Where(c => c.Id == id).Select(c => 
+					new 
+					{ 
+						Community = new CommunityRead(c.Id, c.Name), 
+						IsMember = c.Members.Any(m => m.UserId == userId) 
+					})
+				.SingleOrDefaultAsync();
+
+			if (result == null)
 			{
 				return NotFound();
 			}
 
-			var userId = this.GetUserId();
-
-			if (community.Members.None(member => member.UserId == userId))
+			if (!result.IsMember)
 			{
 				return Unauthorized();
 			}
 
-			return community;
+			return result.Community;
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<ICollection<Community>>> GetByUser([FromQuery] string member)
+		public async Task<ActionResult<ICollection<CommunityRead>>> GetByUser([FromQuery] string member)
 		{
 			if (!this.IsUser(member))
 			{
 				return Unauthorized();
 			}
 
-			return await _context.Communities.Where(community => community.Members.Any(m => m.UserId == member))
+			return await _context.Communities.Where(community => 
+					community.Members.Any(m => m.UserId == member))
+				.Select(community => new CommunityRead(community.Id, community.Name))
 				.ToListAsync();
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<CommunityWrite>> Post(Community community)
+		public async Task<ActionResult<CommunityRead>> Post(Community community)
 		{
 			_context.Communities.Add(community);
-			
+
 			var userId = this.GetUserId();
 
 			community.Members.Add(new CommunityMembership
@@ -69,9 +76,7 @@ namespace CBSWebAPI.Controllers
 
 			await _context.SaveChangesAsync();
 
-			return new CommunityWrite(community.Id, community.Name);
+			return new CommunityRead(community.Id, community.Name);
 		}
-
-		public record CommunityWrite(long Id, string Name);
 	}
 }

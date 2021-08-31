@@ -22,12 +22,17 @@ namespace CBSWebAPI.Controllers
 		}
 
 		[HttpGet]
-		public async Task<ActionResult<IEnumerable<Bike>>> Get() => await _context.Bikes.ToListAsync();
+		public async Task<ActionResult<IEnumerable<BikeRead>>> GetAll() => await _context.Bikes
+			.Select(b => new BikeRead(b.Id, b.Name))
+			.ToListAsync();
 
 		[HttpGet("{id:long}")]
-		public async Task<ActionResult<Bike>> Get(long id)
+		public async Task<ActionResult<BikeRead>> Get(long id)
 		{
-			var bike = await _context.Bikes.FindAsync(id);
+			var bike = await _context.Bikes
+				.Where(b => b.Id == id)
+				.Select(b => new BikeRead(b.Id, b.Name))
+				.SingleOrDefaultAsync();
 
 			if (bike == null)
 			{
@@ -38,22 +43,18 @@ namespace CBSWebAPI.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<Bike>> Post(Bike bike)
+		public async Task<ActionResult<BikeRead>> Post(BikeWrite bikeWrite)
 		{
+			var bike = new Bike(bikeWrite.Name);
 			_context.Bikes.Add(bike);
 			await _context.SaveChangesAsync();
-			return CreatedAtAction(nameof(Get), new { bike.Id }, bike);
+			return CreatedAtAction(nameof(Get), new { bike.Id }, new BikeRead(bike.Id, bike.Name));
 		}
 
 		[HttpPut("{id:long}")]
-		public async Task<IActionResult> Put(long id, Bike bike)
+		public async Task<IActionResult> Put(long id, BikeWrite bike)
 		{
-			if (id != bike.Id)
-			{
-				return BadRequest();
-			}
-
-			_context.Entry(bike).State = EntityState.Modified;
+			_context.Update(new Bike(id, bike.Name));
 
 			try
 			{
