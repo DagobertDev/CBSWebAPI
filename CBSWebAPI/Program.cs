@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,7 +14,8 @@ namespace CBSWebAPI
             using (var scope = host.Services.CreateScope())
             {
 	            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-	            db.Database.Migrate();
+	            db.Database.EnsureDeleted();
+	            db.Database.EnsureCreated();
             }
             
 	        host.Run();
