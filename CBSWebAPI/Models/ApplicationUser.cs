@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace CBSWebAPI.Models
 {
@@ -12,9 +13,19 @@ namespace CBSWebAPI.Models
 		}
 
 		public string Id { get; set; }
+
 		[EmailAddress]
 		public string Email { get; set; }
+
 		[MaxLength(32)]
 		public string Username { get; set; }
+
+		private ICollection<CommunityMembership>? _memberships;
+
+		public ICollection<CommunityMembership> Memberships
+		{
+			get => _memberships ??= new List<CommunityMembership>();
+			set => _memberships = value;
+		}
 	}
 }
