@@ -1,4 +1,6 @@
-﻿namespace CBSWebAPI.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CBSWebAPI.Models
 {
 	public class ApplicationUser
 	{
@@ -10,7 +12,9 @@
 		}
 
 		public string Id { get; set; }
+		[EmailAddress]
 		public string Email { get; set; }
+		[MaxLength(32)]
 		public string Username { get; set; }
 	}
 }

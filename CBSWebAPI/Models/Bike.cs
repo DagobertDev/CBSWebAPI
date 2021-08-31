@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace CBSWebAPI.Models
 {
 	public class Bike
@@ -9,6 +11,7 @@ namespace CBSWebAPI.Models
 		}
 
 		public long Id { get; set; }
+		[MaxLength(32)]
 		public string Name { get; set; }
 	}
 }
