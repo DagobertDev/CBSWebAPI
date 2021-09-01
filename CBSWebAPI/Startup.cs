@@ -1,3 +1,7 @@
+using System;
+using FirebaseAdmin;
+using FirebaseAdmin.Auth;
+using Google.Apis.Auth.OAuth2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -58,12 +62,13 @@ namespace CBSWebAPI
 				                Id = "Bearer" 
 			                } 
 		                },
-                        System.Array.Empty<string>()
+                        Array.Empty<string>()
                     } 
                 });
             });
 
             services.AddDbContext<AppDbContext>(options => options.UseNpgsql(Configuration.GetConnectionString("Postgres")));
+            ConfigureFirebase(services);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -88,6 +93,36 @@ namespace CBSWebAPI
             {
                 endpoints.MapControllers();
             });
+        }
+
+        private static void ConfigureFirebase(IServiceCollection services)
+        {
+	        var credentialsFile = Environment.GetEnvironmentVariable("CBS_GoogleApplicationCredentials");
+	        var credentialsString = Environment.GetEnvironmentVariable("CBS_GoogleApplicationCredentialsSTRING");
+
+	        GoogleCredential? credential;
+
+	        if (!string.IsNullOrEmpty(credentialsFile))
+	        {
+		        credential = GoogleCredential.FromFile(credentialsFile);
+	        }
+
+	        else if (!string.IsNullOrEmpty(credentialsString))
+	        {
+		        credential = GoogleCredential.FromJson(credentialsString);
+	        }
+
+	        else
+	        {
+		        throw new ApplicationException("No GoogleApplicationCredentials are defined");
+	        }
+	        
+	        var firebase = FirebaseApp.Create(new AppOptions
+	        {
+		        Credential = credential
+	        });
+
+	        services.AddSingleton(FirebaseAuth.GetAuth(firebase));
         }
     }
 }

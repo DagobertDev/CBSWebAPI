@@ -1,3 +1,6 @@
+using System.Linq;
+using System.Threading.Tasks;
+using FirebaseAdmin.Auth;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,18 +10,36 @@ namespace CBSWebAPI
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
             
             using (var scope = host.Services.CreateScope())
             {
+	            var firebaseAuth = scope.ServiceProvider.GetRequiredService<FirebaseAuth>();
+	            
+	            var pagedEnumerable = firebaseAuth.ListUsersAsync(null);
+	            var responses = pagedEnumerable.AsRawResponses().GetAsyncEnumerator();
+	            
+	            while (await responses.MoveNextAsync())
+	            {
+		            ExportedUserRecords response = responses.Current;
+		            var users = response.Users;
+
+		            if (users == null)
+		            {
+			            continue;
+		            }
+		            
+		            await firebaseAuth.DeleteUsersAsync(users.Select(user => user.Uid).ToList());
+	            }
+
 	            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-	            db.Database.EnsureDeleted();
-	            db.Database.EnsureCreated();
+	            await db.Database.EnsureDeletedAsync();
+	            await db.Database.EnsureCreatedAsync();
             }
             
-	        host.Run();
+	        await host.RunAsync();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
