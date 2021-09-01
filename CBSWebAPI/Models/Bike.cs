@@ -21,7 +21,7 @@ namespace CBSWebAPI.Models
 		public string Name { get; set; }
 	}
 
-	public record BikeWrite([property: Required, MaxLength(32)] string Name);
+	public record BikeWrite([MaxLength(32)] string Name);
 
 	public record BikeRead(long Id, string Name);
 }

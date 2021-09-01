@@ -61,8 +61,10 @@ namespace CBSWebAPI.Controllers
 		}
 
 		[HttpPost]
-		public async Task<ActionResult<CommunityRead>> Post(Community community)
+		public async Task<ActionResult<CommunityRead>> Post(CommunityWrite communityWrite)
 		{
+			var community = new Community(0, communityWrite.Name);
+			
 			_context.Communities.Add(community);
 
 			var userId = this.GetUserId();
