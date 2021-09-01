@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebAPI.Models
 {
+	[Index(nameof(Email), IsUnique = true)]
 	public class ApplicationUser
 	{
 		public ApplicationUser(string id, string email, string username)
@@ -28,4 +30,8 @@ namespace CBSWebAPI.Models
 			set => _memberships = value;
 		}
 	}
+
+	public record UserWrite([EmailAddress] string Email, [MaxLength(32)] string Username, [MinLength(6)] string Password);
+	
+	public record UserRead(string Id, string Email, string Username);
 }

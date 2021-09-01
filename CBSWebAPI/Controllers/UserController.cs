@@ -1,6 +1,9 @@
-﻿using System.Data;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 using CBSWebAPI.Models;
+using FirebaseAdmin.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,16 +16,21 @@ namespace CBSWebAPI.Controllers
 	public class UserController : ControllerBase
 	{
 		private readonly AppDbContext _context;
+		private readonly FirebaseAuth _auth;
 
-		public UserController(AppDbContext context)
+		public UserController(AppDbContext context, FirebaseAuth auth)
 		{
 			_context = context;
+			_auth = auth;
 		}
 
 		[HttpGet("{id}")]
-		public async Task<ActionResult<ApplicationUser>> Get(string id)
+		public async Task<ActionResult<UserRead>> Get(string id)
 		{
-			var user = await _context.Users.FindAsync(id);
+			var user = await _context.Users
+				.Where(u => u.Id == id)
+				.Select(u => new UserRead(u.Id, u.Email, u.Username))
+				.SingleOrDefaultAsync();
 
 			if (user == null)
 			{
@@ -32,10 +40,13 @@ namespace CBSWebAPI.Controllers
 			return user;
 		}
 
-		[HttpGet("email/{email}")]
-		public async Task<ActionResult<ApplicationUser>> GetByEmail(string email)
+		[HttpGet]
+		public async Task<ActionResult<UserRead>> GetByEmail([FromQuery] [EmailAddress] string email)
 		{
-			var user = await _context.Users.SingleOrDefaultAsync(user => user.Email == email);
+			var user = await _context.Users
+				.Where(u => u.Email == email)
+				.Select(u => new UserRead(u.Id, u.Email, u.Username))
+				.SingleOrDefaultAsync();
 
 			if (user == null)
 			{
@@ -45,64 +56,35 @@ namespace CBSWebAPI.Controllers
 			return user;
 		}
 
+		[AllowAnonymous]
 		[HttpPost]
-		public async Task<ActionResult<ApplicationUser>> Post(ApplicationUser user)
+		public async Task<ActionResult<UserRead>> Post(UserWrite user)
 		{
-			if (!this.IsUser(user.Id))
-			{
-				return Unauthorized();
-			}
-			
-			if (this.GetUserEmail() != user.Email)
-			{
-				return BadRequest();
-			}
-			
-			if (await UserExists(user.Id))
-			{
-				return BadRequest();
-			}
-
-			_context.Users.Add(user);
-			await _context.SaveChangesAsync();
-			return CreatedAtAction(nameof(Get), new { user.Id }, user);
-		}
-
-		[HttpPut("{id}")]
-		public async Task<IActionResult> Put(string id, ApplicationUser user)
-		{ 
-			if (!this.IsUser(id))
-			{
-				return Unauthorized();
-			}
-			
-			if (id != user.Id)
-			{
-				return BadRequest();
-			}
-			
-			if (this.GetUserEmail() != user.Email)
-			{
-				return BadRequest();
-			}
-
-			_context.Entry(user).State = EntityState.Modified;
-
 			try
 			{
-				await _context.SaveChangesAsync();
-			}
-			catch (DBConcurrencyException)
-			{
-				if (!await UserExists(id))
+				var record = await _auth.CreateUserAsync(new UserRecordArgs
 				{
-					return NotFound();
+					Uid = Guid.NewGuid().ToString(),
+					Email = user.Email,
+					Password = user.Password,
+					DisplayName = user.Username,
+				});
+
+				_context.Users.Add(new ApplicationUser(record.Uid, record.Email, record.DisplayName));
+				await _context.SaveChangesAsync();
+
+				return CreatedAtAction(nameof(Get), new { Id = record.Uid },
+					new UserRead(record.Uid, record.Email, record.DisplayName));
+			}
+			catch (FirebaseAuthException e)
+			{
+				if (e.AuthErrorCode == AuthErrorCode.EmailAlreadyExists)
+				{
+					return Conflict("Email already exists");
 				}
 
 				throw;
 			}
-
-			return NoContent();
 		}
 
 		[HttpDelete("{id}")]
@@ -120,12 +102,11 @@ namespace CBSWebAPI.Controllers
 				return NotFound();
 			}
 
+
 			_context.Users.Remove(user);
 			await _context.SaveChangesAsync();
-
+			await _auth.DeleteUserAsync(id);
 			return NoContent();
 		}
-
-		private Task<bool> UserExists(string id) => _context.Users.AnyAsync(user => user.Id == id);
 	}
 }
