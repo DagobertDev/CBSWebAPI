@@ -21,17 +21,12 @@ namespace CBSWebAPI.Controllers
 			_context = context;
 		}
 
-		[HttpGet]
-		public async Task<ActionResult<IEnumerable<BikeRead>>> GetAll() => await _context.Bikes
-			.Select(b => new BikeRead(b.Id, b.Name))
-			.ToListAsync();
-
 		[HttpGet("{id:long}")]
 		public async Task<ActionResult<BikeRead>> Get(long id)
 		{
 			var bike = await _context.Bikes
 				.Where(b => b.Id == id)
-				.Select(b => new BikeRead(b.Id, b.Name))
+				.Select(b => new BikeRead(b.Id,  b.CommunityId, b.Name))
 				.SingleOrDefaultAsync();
 
 			if (bike == null)
@@ -41,20 +36,27 @@ namespace CBSWebAPI.Controllers
 
 			return bike;
 		}
+		
+		[HttpGet]
+		public async Task<ActionResult<IEnumerable<BikeRead>>> GetByCommunity([FromQuery] long communityId) => await _context.Bikes
+			.Where(b => b.CommunityId == communityId)
+			.Select(b => new BikeRead(b.Id, b.CommunityId, b.Name))
+			.ToListAsync();
+
 
 		[HttpPost]
-		public async Task<ActionResult<BikeRead>> Post(BikeWrite bikeWrite)
+		public async Task<ActionResult<BikeRead>> Post(BikeWrite request)
 		{
-			var bike = new Bike(bikeWrite.Name);
+			var bike = new Bike(request.CommunityId, request.Name);
 			_context.Bikes.Add(bike);
 			await _context.SaveChangesAsync();
-			return CreatedAtAction(nameof(Get), new { bike.Id }, new BikeRead(bike.Id, bike.Name));
+			return CreatedAtAction(nameof(Get), new { bike.Id }, new BikeRead(bike.Id, bike.CommunityId, bike.Name));
 		}
 
 		[HttpPut("{id:long}")]
 		public async Task<IActionResult> Put(long id, BikeWrite bike)
 		{
-			_context.Update(new Bike(id, bike.Name));
+			_context.Update(new Bike(id, bike.CommunityId, bike.Name));
 
 			try
 			{
