@@ -21,4 +21,7 @@ namespace CBSWebAPI.Models
 		Admin,
 		User
 	}
+
+	public record CommunityMembershipWrite(string UserId, long CommunityId, CommunityRole Role);
+	public record CommunityMembershipRead(string UserId, long CommunityId, CommunityRole Role, string Username);
 }

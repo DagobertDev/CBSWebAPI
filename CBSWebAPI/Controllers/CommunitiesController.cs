@@ -80,5 +80,59 @@ namespace CBSWebAPI.Controllers
 
 			return new CommunityRead(community.Id, community.Name);
 		}
+
+		[HttpGet("{id:long}/members")]
+		public async Task<ActionResult<ICollection<CommunityMembershipRead>>> GetMembers(long id)
+		{
+			var userId = this.GetUserId();
+
+			var result = await _context.Memberships
+				.Where(m => m.CommunityId == id)
+				.Select(m => new CommunityMembershipRead(m.UserId, m.CommunityId, m.Role, m.User.Username))
+				.ToListAsync();
+
+			if (result.None(u => u.UserId == userId))
+			{
+				return Unauthorized();
+			}
+
+			return result;
+		}
+		
+		[HttpPost("{id:long}/members")]
+		public async Task<ActionResult<CommunityMembershipRead>> AddMember(long id, CommunityMembershipWrite membershipWrite)
+		{
+			if (id != membershipWrite.CommunityId) 
+			{
+				return BadRequest();
+			}
+			
+			var requestUserId = this.GetUserId();
+			var isAdmin = await _context.Memberships.AnyAsync(m => m.UserId == requestUserId 
+			                                                 && m.CommunityId == membershipWrite.CommunityId
+			                                                 && m.Role == CommunityRole.Admin);
+
+			if (!isAdmin)
+			{
+				return Unauthorized();
+			}
+			
+			var membership = new CommunityMembership
+			{
+				UserId = membershipWrite.UserId,
+				CommunityId = membershipWrite.CommunityId,
+				Role = membershipWrite.Role
+			};
+			
+			_context.Memberships.Add(membership);
+			await _context.SaveChangesAsync();
+
+			var username = await _context.Users
+				.Where(u => u.Id == membership.UserId)
+				.Select(u => u.Username)
+				.SingleAsync();
+
+			return new CommunityMembershipRead(membership.UserId, membership.CommunityId, membership.Role, username);
+		}
 	}
 }

@@ -10,6 +10,7 @@ namespace CBSWebAPI
 		public DbSet<Bike> Bikes => Set<Bike>();
 		public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
 		public DbSet<Community> Communities => Set<Community>();
+		public DbSet<CommunityMembership> Memberships => Set<CommunityMembership>();
 
 		protected override void OnModelCreating(ModelBuilder model)
 		{
