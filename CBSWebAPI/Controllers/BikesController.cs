@@ -26,7 +26,7 @@ namespace CBSWebAPI.Controllers
 		{
 			var bike = await _context.Bikes
 				.Where(b => b.Id == id)
-				.Select(b => new BikeRead(b.Id,  b.CommunityId, b.Name))
+				.Select(b => new BikeRead(b.Id,  b.CommunityId, b.Name, b.UserId))
 				.SingleOrDefaultAsync();
 
 			if (bike == null)
@@ -36,12 +36,59 @@ namespace CBSWebAPI.Controllers
 
 			return bike;
 		}
-		
+
 		[HttpGet]
-		public async Task<ActionResult<IEnumerable<BikeRead>>> GetByCommunity([FromQuery] long communityId) => await _context.Bikes
-			.Where(b => b.CommunityId == communityId)
-			.Select(b => new BikeRead(b.Id, b.CommunityId, b.Name))
-			.ToListAsync();
+		public async Task<ActionResult<ICollection<BikeRead>>> GetQuery([FromQuery] long? communityId, [FromQuery] string? userId)
+		{
+			if (communityId.HasValue)
+			{
+				return await GetByCommunity(communityId.Value);
+			}
+
+			if (userId != null)
+			{
+				return await GetByUser(userId);
+			}
+
+			return BadRequest();
+		}
+
+		private async Task<ActionResult<ICollection<BikeRead>>> GetByCommunity([FromQuery] long communityId)
+		{
+			var userId = this.GetUserId();
+			
+			var isMember = await _context.Memberships
+				.Where(m => m.UserId == userId && m.CommunityId == communityId)
+				.AnyAsync();
+
+			if (!isMember)
+			{
+				return Unauthorized();
+			}
+			
+			return await _context.Bikes
+				.Where(b => b.CommunityId == communityId)
+				.Select(b => new BikeRead(b.Id, b.CommunityId, b.Name, b.UserId))
+				.ToListAsync();
+		}
+
+
+		private async Task<ActionResult<ICollection<BikeRead>>> GetByUser([FromQuery] string userId)
+		{
+			if (this.GetUserId() != userId)
+			{
+				return Unauthorized();
+			}
+
+			var query = from b in _context.Bikes 
+			            join c in _context.Communities on b.CommunityId equals c.Id
+			            where c.Members.Any(m => m.UserId == userId)
+			            where b.UserId == userId || b.UserId == null
+			            
+			            select new BikeRead(b.Id, b.CommunityId, b.Name, b.UserId);
+
+			return await query.ToListAsync();
+		}
 
 
 		[HttpPost]
@@ -50,7 +97,7 @@ namespace CBSWebAPI.Controllers
 			var bike = new Bike(request.CommunityId, request.Name);
 			_context.Bikes.Add(bike);
 			await _context.SaveChangesAsync();
-			return CreatedAtAction(nameof(Get), new { bike.Id }, new BikeRead(bike.Id, bike.CommunityId, bike.Name));
+			return CreatedAtAction(nameof(Get), new { bike.Id }, new BikeRead(bike.Id, bike.CommunityId, bike.Name, bike.UserId));
 		}
 
 		[HttpPut("{id:long}")]

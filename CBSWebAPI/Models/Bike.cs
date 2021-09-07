@@ -25,11 +25,14 @@ namespace CBSWebAPI.Models
 		
 		[ForeignKey(nameof(Community))]
 		public long CommunityId { get; set; }
-
 		public Community Community { get; set; } = null!;
+		
+		[ForeignKey(nameof(User))]
+		public string? UserId { get; set; }
+		public string? User { get; set; }
 	}
 
 	public record BikeWrite(long CommunityId, [MaxLength(32)] string Name);
 
-	public record BikeRead(long Id, long CommunityId, string Name);
+	public record BikeRead(long Id, long CommunityId, string Name, string? UserId);
 }

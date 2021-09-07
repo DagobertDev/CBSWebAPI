@@ -29,6 +29,14 @@ namespace CBSWebAPI.Models
 			get => _memberships ??= new List<CommunityMembership>();
 			set => _memberships = value;
 		}
+		
+		private ICollection<Bike>? _bikes;
+
+		public ICollection<Bike> Bikes
+		{
+			get => _bikes ??= new List<Bike>();
+			set => _bikes = value;
+		}
 	}
 
 	public record UserWrite([EmailAddress] string Email, [MaxLength(32)] string Username, [MinLength(6)] string Password);
