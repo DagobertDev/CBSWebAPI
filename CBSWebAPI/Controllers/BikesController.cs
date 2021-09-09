@@ -137,6 +137,50 @@ namespace CBSWebAPI.Controllers
 
 			return NoContent();
 		}
+		
+		[HttpPost("{id:long}/lend")]
+		public async Task<ActionResult<Bike>> Lend(long id)
+		{
+			var bike = await _context.Bikes.FindAsync(id);
+
+			if (bike == null)
+			{
+				return NotFound();
+			}
+
+			var userId = this.GetUserId();
+
+			if (bike.UserId != null)
+			{
+				return Unauthorized("Bike is already in use");
+			}
+
+			bike.UserId = userId;
+			await _context.SaveChangesAsync();
+
+			return bike;
+		}
+		
+		[HttpPost("{id:long}/return")]
+		public async Task<ActionResult<Bike>> Return(long id)
+		{
+			var bike = await _context.Bikes.FindAsync(id);
+
+			if (bike == null)
+			{
+				return NotFound();
+			}
+
+			if (bike.UserId != this.GetUserId())
+			{
+				return Unauthorized();
+			}
+
+			bike.UserId = null;
+			await _context.SaveChangesAsync();
+
+			return bike;
+		}
 
 		private bool BikeExists(long id) => _context.Bikes.Any(bike => bike.Id == id);
 	}
