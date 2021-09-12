@@ -34,5 +34,8 @@ namespace CBSWebAPI.Models
 
 	public record BikeWrite(long CommunityId, [MaxLength(32)] string Name);
 
-	public record BikeRead(long Id, long CommunityId, string Name, string? UserId);
+	public record BikeRead(long Id, long CommunityId, string Name, string? UserId)
+	{
+		public static BikeRead From(Bike bike) => new(bike.Id, bike.CommunityId, bike.Name, bike.UserId);
+	}
 }

@@ -26,7 +26,7 @@ namespace CBSWebAPI.Controllers
 		{
 			var bike = await _context.Bikes
 				.Where(b => b.Id == id)
-				.Select(b => new BikeRead(b.Id,  b.CommunityId, b.Name, b.UserId))
+				.Select(b => BikeRead.From(b))
 				.SingleOrDefaultAsync();
 
 			if (bike == null)
@@ -68,7 +68,7 @@ namespace CBSWebAPI.Controllers
 			
 			return await _context.Bikes
 				.Where(b => b.CommunityId == communityId)
-				.Select(b => new BikeRead(b.Id, b.CommunityId, b.Name, b.UserId))
+				.Select(b => BikeRead.From(b))
 				.ToListAsync();
 		}
 
@@ -80,12 +80,11 @@ namespace CBSWebAPI.Controllers
 				return Unauthorized();
 			}
 
-			var query = from b in _context.Bikes 
+			var query = from b in _context.Bikes
 			            join c in _context.Communities on b.CommunityId equals c.Id
 			            where c.Members.Any(m => m.UserId == userId)
 			            where b.UserId == userId || b.UserId == null
-			            
-			            select new BikeRead(b.Id, b.CommunityId, b.Name, b.UserId);
+			            select BikeRead.From(b);
 
 			return await query.ToListAsync();
 		}
@@ -97,7 +96,7 @@ namespace CBSWebAPI.Controllers
 			var bike = new Bike(request.CommunityId, request.Name);
 			_context.Bikes.Add(bike);
 			await _context.SaveChangesAsync();
-			return CreatedAtAction(nameof(Get), new { bike.Id }, new BikeRead(bike.Id, bike.CommunityId, bike.Name, bike.UserId));
+			return CreatedAtAction(nameof(Get), new { bike.Id }, BikeRead.From(bike));
 		}
 
 		[HttpPut("{id:long}")]
@@ -139,7 +138,7 @@ namespace CBSWebAPI.Controllers
 		}
 		
 		[HttpPost("{id:long}/lend")]
-		public async Task<ActionResult<Bike>> Lend(long id)
+		public async Task<ActionResult<BikeRead>> Lend(long id)
 		{
 			var bike = await _context.Bikes.FindAsync(id);
 
@@ -158,11 +157,11 @@ namespace CBSWebAPI.Controllers
 			bike.UserId = userId;
 			await _context.SaveChangesAsync();
 
-			return bike;
+			return BikeRead.From(bike);
 		}
 		
 		[HttpPost("{id:long}/return")]
-		public async Task<ActionResult<Bike>> Return(long id)
+		public async Task<ActionResult<BikeRead>> Return(long id)
 		{
 			var bike = await _context.Bikes.FindAsync(id);
 
@@ -179,7 +178,7 @@ namespace CBSWebAPI.Controllers
 			bike.UserId = null;
 			await _context.SaveChangesAsync();
 
-			return bike;
+			return BikeRead.From(bike);
 		}
 
 		private bool BikeExists(long id) => _context.Bikes.Any(bike => bike.Id == id);
