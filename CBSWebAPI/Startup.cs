@@ -95,10 +95,10 @@ namespace CBSWebAPI
             });
         }
 
-        private static void ConfigureFirebase(IServiceCollection services)
+        private void ConfigureFirebase(IServiceCollection services)
         {
-	        var credentialsFile = Environment.GetEnvironmentVariable("CBS_GoogleApplicationCredentials");
-	        var credentialsString = Environment.GetEnvironmentVariable("CBS_GoogleApplicationCredentialsSTRING");
+	        var credentialsFile = Configuration.GetValue<string>("GoogleApplicationCredentials");
+	        var credentialsString = Configuration.GetValue<string>("GoogleApplicationCredentialsSTRING");
 
 	        GoogleCredential? credential;
 
