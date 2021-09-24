@@ -102,7 +102,7 @@ namespace CBSWebAPI.Controllers
 		[HttpPut("{id:long}")]
 		public async Task<IActionResult> Put(long id, BikeWrite bike)
 		{
-			_context.Update(new Bike(id, bike.CommunityId, bike.Name));
+			_context.Update(new Bike(id, bike.CommunityId, bike.Name, bike.Position));
 
 			try
 			{
@@ -136,7 +136,7 @@ namespace CBSWebAPI.Controllers
 
 			return NoContent();
 		}
-		
+
 		[HttpPost("{id:long}/lend")]
 		public async Task<ActionResult<BikeRead>> Lend(long id)
 		{
@@ -155,13 +155,14 @@ namespace CBSWebAPI.Controllers
 			}
 
 			bike.UserId = userId;
+			bike.Position = null;
 			await _context.SaveChangesAsync();
 
 			return BikeRead.From(bike);
 		}
 		
 		[HttpPost("{id:long}/return")]
-		public async Task<ActionResult<BikeRead>> Return(long id)
+		public async Task<ActionResult<BikeRead>> Return(long id, GeoPosition position)
 		{
 			var bike = await _context.Bikes.FindAsync(id);
 
@@ -176,6 +177,7 @@ namespace CBSWebAPI.Controllers
 			}
 
 			bike.UserId = null;
+			bike.Position = position;
 			await _context.SaveChangesAsync();
 
 			return BikeRead.From(bike);

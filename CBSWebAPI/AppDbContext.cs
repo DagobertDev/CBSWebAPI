@@ -1,4 +1,5 @@
-﻿using CBSWebAPI.Models;
+﻿using System.Text.Json;
+using CBSWebAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CBSWebAPI
@@ -18,6 +19,10 @@ namespace CBSWebAPI
 			{
 				membership.HasKey(m => new { m.UserId, m.CommunityId });
 			});
+
+			model.Entity<Bike>().Property(b => b.Position).HasConversion(
+				p => JsonSerializer.Serialize(p, new JsonSerializerOptions()),
+				p => JsonSerializer.Deserialize<GeoPosition>(p, new JsonSerializerOptions()));
 		}
 	}
 }
